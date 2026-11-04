@@ -13,7 +13,7 @@
 --text: #2b2d42;
 }
 body {
-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+font-family: 'Segoe UI', Tahoma, sans-serif;
 background-color: var(--background);
 color: var(--text);
 margin: 0;
@@ -33,7 +33,7 @@ max-width: 500px;
 text-align: center;
 }
 h1 { color: var(--primary); margin-top: 0; font-size: 28px; }
-.setup-screen button {
+.setup-screen button, .back-btn {
 display: block;
 width: 100%;
 padding: 15px;
@@ -43,25 +43,51 @@ border: none;
 border-radius: 10px;
 cursor: pointer;
 background: #e2e8f0;
-transition: all 0.2s;
+font-weight: bold;
 }
 .setup-screen button:hover { background: var(--primary); color: white; }
 .stats-bar {
-display: flex;
-justify-content: space-between;
-margin-bottom: 20px;
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 10px;
+margin-bottom: 15px;
 font-weight: bold;
-font-size: 16px;
+font-size: 14px;
 background: #f8fafc;
-padding: 10px;
-border-radius: 8px;
+padding: 12px;
+border-radius: 12px;
+}
+.stat-card { display: flex; flex-direction: column; justify-content: center; }
+.stat-val { font-size: 18px; color: var(--primary); }
+.level-container {
+background: #e2e8f0;
+border-radius: 20px;
+margin: 15px 0 25px 0;
+position: relative;
+height: 24px;
+overflow: hidden;
+}
+.level-bar {
+background: linear-gradient(90deg, #2ec4b6, #00b4d8);
+width: 0%;
+height: 100%;
+transition: width 0.4s ease;
+}
+.level-text {
+position: absolute;
+width: 100%;
+text-align: center;
+top: 2px;
+left: 0;
+font-size: 13px;
+font-weight: bold;
+color: #1e293b;
 }
 .question-box {
-font-size: 32px;
+font-size: 36px;
 font-weight: bold;
-margin: 30px 0;
+margin: 25px 0;
 color: var(--text);
-line-height: 1.4;
 }
 .options-grid {
 display: grid;
@@ -69,28 +95,38 @@ grid-template-columns: 1fr 1fr;
 gap: 15px;
 }
 .option-btn {
-padding: 15px;
-font-size: 20px;
+padding: 18px;
+font-size: 22px;
+font-weight: bold;
 border: 2px solid #cbd5e1;
-border-radius: 12px;
+border-radius: 14px;
 background: white;
 cursor: pointer;
-transition: all 0.2s;
 }
 .option-btn:hover { border-color: var(--primary); background: #f0f4f8; }
 .correct { background-color: var(--success) !important; color: white; border-color: var(--success) !important; }
 .wrong { background-color: var(--danger) !important; color: white; border-color: var(--danger) !important; }
 .hidden { display: none; }
-.feedback { font-size: 18px; font-weight: bold; margin-top: 15px; min-height: 24px; }
+.feedback { font-size: 22px; font-weight: bold; margin-top: 20px; min-height: 30px; color: var(--primary); }
 .next-btn {
 margin-top: 20px;
-padding: 12px 30px;
-font-size: 16px;
-background: var(--primary);
+padding: 14px 40px;
+font-size: 18px;
+font-weight: bold;
+background: #4a6fa5;
 color: white;
 border: none;
-border-radius: 8px;
+border-radius: 10px;
 cursor: pointer;
+}
+.back-btn {
+padding: 8px 12px;
+font-size: 13px;
+width: auto;
+margin: 20px auto 0 auto;
+background: transparent;
+color: #64748b;
+border: 1px solid #cbd5e1;
 }
 </style>
 </head>
@@ -99,94 +135,128 @@ cursor: pointer;
 <div class="game-container">
 <div id="setup-screen" class="setup-screen">
 <h1>KS2 SATs Maths Arena</h1>
-<p>Select your practice level:</p>
-<button onclick="startGame('lower')">Lower Primary (Ages 6-8)</button>
-<button onclick="startGame('upper')">Upper Primary / SATs (Ages 9-11)</button>
+<p style="color: #64748b; font-weight: 500;">Earn XP, keep your streak alive, and level up your rank!</p>
+<button onclick="startGame('lower')">🚀 Lower Primary (Ages 6-8)</button>
+<button onclick="startGame('upper')">🏆 Upper Primary / SATs (Ages 9-11)</button>
 </div>
 
 <div id="game-screen" class="hidden">
 <div class="stats-bar">
-<span>Score: <span id="score">0</span>/<span id="total-questions">0</span></span>
-<span>Streak: 🔥 <span id="streak">0</span></span>
+<div class="stat-card"><span>Score</span><span id="score" class="stat-val">0/0</span></div>
+<div class="stat-card"><span>Streak</span><span id="streak" class="stat-val">🔥 0</span></div>
+<div class="stat-card"><span>Best Streak</span><span id="high-score" class="stat-val">👑 0</span></div>
 </div>
 
-<div id="question-text" class="question-box">Loading...</div>
+<div class="level-container">
+<div id="level-bar" class="level-bar"></div>
+<div id="level-text" class="level-text">Rank: Loading...</div>
+</div>
+
+<div id="question-text" class="question-box">Loading Sum...</div>
 <div id="options-container" class="options-grid"></div>
 <div id="feedback-text" class="feedback"></div>
 
-<button id="next-button" class="next-btn hidden" onclick="nextQuestion()">Next Question ➡️</button>
+<button id="next-button" class="next-btn hidden" onclick="nextQuestion()">Next Challenge ➡️</button>
+<button class="back-btn" onclick="exitToMenu()">⚙️ Change Level</button>
 </div>
 </div>
 
 <script>
-let score = 0;
-let totalQuestions = 0;
-let streak = 0;
-let currentTier = 'lower';
-let currentAnswer = "";
-let hasAnswered = false;
+var score = 0;
+var totalQuestions = 0;
+var streak = 0;
+var maxStreak = 0;
+var xp = 0;
+var currentTier = 'lower';
+var currentAnswer = '';
+var hasAnswered = false;
+
+function getRankName(xpValue) {
+if (xpValue < 30) return 'Maths Novice 🌱';
+if (xpValue < 80) return 'Sum Apprentice 🛡️';
+if (xpValue < 150) return 'Equation Knight ⚔️';
+if (xpValue < 250) return 'Number Wizard 🔮';
+return 'SATS Grandmaster 👑';
+}
+
+function exitToMenu() {
+document.getElementById('game-screen').className = 'hidden';
+document.getElementById('setup-screen').className = 'setup-screen';
+}
 
 function startGame(tier) {
 currentTier = tier;
-score = 0; totalQuestions = 0; streak = 0;
-document.getElementById('score').innerText = score;
-document.getElementById('total-questions').innerText = totalQuestions;
-document.getElementById('streak').innerText = streak;
-document.getElementById('setup-screen').classList.add('hidden');
-document.getElementById('game-screen').classList.remove('hidden');
+score = 0;
+totalQuestions = 0;
+streak = 0;
+xp = parseInt(localStorage.getItem('xp_' + currentTier)) || 0;
+maxStreak = parseInt(localStorage.getItem('streak_' + currentTier)) || 0;
+
+document.getElementById('score').innerText = '0/0';
+document.getElementById('streak').innerText = '🔥 0';
+document.getElementById('high-score').innerText = '👑 ' + maxStreak;
+
+updateLevelBar();
+document.getElementById('setup-screen').className = 'hidden';
+document.getElementById('game-screen').className = '';
 generateQuestion();
+}
+
+function updateLevelBar() {
+var percentage = Math.min((xp / 300) * 100, 100);
+document.getElementById('level-bar').style.width = percentage + '%';
+document.getElementById('level-text').innerText = getRankName(xp) + ' (' + xp + ' XP)';
 }
 
 function generateQuestion() {
 hasAnswered = false;
 document.getElementById('feedback-text').innerText = '';
-document.getElementById('next-button').classList.add('hidden');
+document.getElementById('next-button').className = 'hidden';
 
-let qText = '';
-let ans = 0;
-let isDecimal = false;
+var qText = '';
+var ans = 0;
 
 if (currentTier === 'lower') {
-let choice = Math.floor(Math.random() * 3);
+var choice = Math.floor(Math.random() * 3);
 if (choice === 0) {
-let num1 = Math.floor(Math.random() * 80) + 10;
-let num2 = Math.floor(Math.random() * 50) + 5;
-qText = num1 + " + " + num2;
+var num1 = Math.floor(Math.random() * 70) + 15;
+var num2 = Math.floor(Math.random() * 40) + 5;
+qText = num1 + ' + ' + num2;
 ans = num1 + num2;
 } else if (choice === 1) {
-let num1 = Math.floor(Math.random() * 90) + 10;
-let num2 = Math.floor(Math.random() * num1);
-qText = num1 + " - " + num2;
+var num1 = Math.floor(Math.random() * 90) + 10;
+var num2 = Math.floor(Math.random() * num1);
+qText = num1 + ' - ' + num2;
 ans = num1 - num2;
 } else {
-let num1 = Math.floor(Math.random() * 10) + 2;
-let num2 = Math.floor(Math.random() * 10) + 1;
-qText = num1 + " x " + num2;
+var num1 = Math.floor(Math.random() * 9) + 2;
+var num2 = Math.floor(Math.random() * 10) + 1;
+qText = num1 + ' x ' + num2;
 ans = num1 * num2;
 }
 } else {
-let choice = Math.floor(Math.random() * 4);
+var choice = Math.floor(Math.random() * 4);
 if (choice === 0) {
-let factor = Math.floor(Math.random() * 8) + 2;
-let wholeAmount = 5 * factor;
-let num = Math.floor(Math.random() * 4) + 1;
-qText = "Find " + num + "/5 of " + wholeAmount;
+var factor = Math.floor(Math.random() * 8) + 2;
+var wholeAmount = 5 * factor;
+var num = Math.floor(Math.random() * 4) + 1;
+qText = 'Find ' + num + '/5 of ' + wholeAmount;
 ans = (wholeAmount / 5) * num;
 } else if (choice === 1) {
-let base = (Math.floor(Math.random() * 10) + 1) * 20;
-qText = "25% of " + base;
+var base = (Math.floor(Math.random() * 10) + 1) * 20;
+qText = '25% of ' + base;
 ans = base * 0.25;
 } else if (choice === 2) {
-let secret = Math.floor(Math.random() * 20) + 5;
-let known = Math.floor(Math.random() * 30) + 10;
-let target = secret + known;
-qText = "Find x: x + " + known + " = " + target;
+var secret = Math.floor(Math.random() * 15) + 5;
+var known = Math.floor(Math.random() * 25) + 10;
+var target = secret + known;
+qText = 'Find x: x + ' + known + ' = ' + target;
 ans = secret;
 } else {
-let num1 = Math.floor(Math.random() * 8) + 3;
-let num2 = Math.floor(Math.random() * 5) + 2;
-let num3 = Math.floor(Math.random() * 20) + 5;
-qText = num3 + " + (" + num1 + " x " + num2 + ")";
+var num1 = Math.floor(Math.random() * 7) + 3;
+var num2 = Math.floor(Math.random() * 4) + 2;
+var num3 = Math.floor(Math.random() * 15) + 5;
+qText = num3 + ' + (' + num1 + ' x ' + num2 + ')';
 ans = num3 + (num1 * num2);
 }
 }
@@ -197,63 +267,68 @@ setupOptions(ans);
 }
 
 function setupOptions(correctAnswer) {
-const container = document.getElementById('options-container');
+var container = document.getElementById('options-container');
 container.innerHTML = '';
 
-let optionsSet = new Set();
+var optionsSet = new Set();
 optionsSet.add(correctAnswer.toString());
-
 while(optionsSet.size < 4) {
-let variance = Math.floor(Math.random() * 10) - 5;
-if (variance === 0) variance = 3;
-let fakeAns = correctAnswer + variance;
+var variance = Math.floor(Math.random() * 10) - 5;
+if (variance === 0) variance = 4;
+var fakeAns = correctAnswer + variance;
 if (fakeAns >= 0) optionsSet.add(fakeAns.toString());
 }
-
-let optionsArray = Array.from(optionsSet).sort(function() { return 0.5 - Math.random(); });
-
-for(let i = 0; i < optionsArray.length; i++) {
-let opt = optionsArray[i];
-let btn = document.createElement('button');
+var optionsArray = Array.from(optionsSet).sort(function() { return 0.5 - Math.random(); });
+for(var i = 0; i < optionsArray.length; i++) {
+(function() {
+var opt = optionsArray[i];
+var btn = document.createElement('button');
 btn.className = 'option-btn';
 btn.innerText = opt;
 btn.onclick = function() { checkAnswer(opt, btn); };
 container.appendChild(btn);
+})();
 }
 }
-
 function checkAnswer(selected, selectedBtn) {
 if (hasAnswered) return;
 hasAnswered = true;
 totalQuestions++;
-document.getElementById('total-questions').innerText = totalQuestions;
-
-const buttons = document.querySelectorAll('.option-btn');
-
+var buttons = document.querySelectorAll('.option-btn');
+var feedbackEl = document.getElementById('feedback-text');
 if (selected === currentAnswer) {
-selectedBtn.classList.add('correct');
-document.getElementById('feedback-text').innerHTML = "🌟 Brilliant! That's correct.";
-score++; streak++;
-document.getElementById('score').innerText = score;
+selectedBtn.className = 'option-btn correct';
+score++;
+streak++;
+var baseXP = 10;
+if (streak >= 3) {
+baseXP = 15;
+feedbackEl.innerHTML = '🔥 STREAK BONUS! +15 XP';
 } else {
-selectedBtn.classList.add('wrong');
-document.getElementById('feedback-text').innerHTML = "❌ Not quite! The answer was " + currentAnswer + ".";
+feedbackEl.innerHTML = '🌟 Brilliant! +10 XP';
+}
+xp += baseXP;
+localStorage.setItem('xp_' + currentTier, xp);
+if (streak > maxStreak) {
+maxStreak = streak;
+localStorage.setItem('streak_' + currentTier, maxStreak);
+document.getElementById('high-score').innerText = '👑 ' + maxStreak;
+}
+} else {
+selectedBtn.className = 'option-btn wrong';
+feedbackEl.innerHTML = '🧠 Great try! The answer was ' + currentAnswer;
 streak = 0;
-
-for(let i = 0; i < buttons.length; i++) {
+for(var i = 0; i < buttons.length; i++) {
 if (buttons[i].innerText === currentAnswer) {
-buttons[i].classList.add('correct');
+buttons[i].className = 'option-btn correct';
 }
 }
 }
-document.getElementById('streak').innerText = streak;
-document.getElementById('next-button').classList.remove('hidden');
+document.getElementById('score').innerText = score + '/' + totalQuestions;
+document.getElementById('streak').innerText = '🔥 ' + streak;
+updateLevelBar();
+document.getElementById('next-button').className = 'next-btn';
 }
-
 function nextQuestion() {
 generateQuestion();
 }
-</script>
-
-</body>
-</html>
