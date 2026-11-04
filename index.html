@@ -57,10 +57,11 @@ padding: 10px;
 border-radius: 8px;
 }
 .question-box {
-font-size: 36px;
+font-size: 32px;
 font-weight: bold;
 margin: 30px 0;
 color: var(--text);
+line-height: 1.4;
 }
 .options-grid {
 display: grid;
@@ -111,7 +112,7 @@ cursor: pointer;
 <span>Streak: 🔥 <span id="streak">0</span></span>
 </div>
 
-<div class="question-box" id="question-text">25 × 4</div>
+<div class="question-box" id="question-text">Loading...</div>
 
 <div class="options-grid" id="options-container">
 <!-- Dynamic Options Buttons Go Here -->
@@ -127,7 +128,7 @@ let score = 0;
 let totalQuestions = 0;
 let streak = 0;
 let currentTier = 'lower';
-let currentAnswer = 0;
+let currentAnswer = "";
 let hasAnswered = false;
 
 function startGame(tier) {
@@ -150,9 +151,9 @@ document.getElementById('next-button').classList.add('hidden');
 
 let qText = '';
 let ans = 0;
+let isDecimal = false;
 
 if (currentTier === 'lower') {
-// Addition, Subtraction, basic Multiples (Ages 6-8)
 const types = ['add', 'sub', 'mult'];
 const type = types[Math.floor(Math.random() * types.length)];
 
@@ -163,7 +164,7 @@ qText = `${num1} + ${num2}`;
 ans = num1 + num2;
 } else if (type === 'sub') {
 let num1 = Math.floor(Math.random() * 90) + 10;
-let num2 = Math.floor(Math.random() * num1); // avoid negative results
+let num2 = Math.floor(Math.random() * num1);
 qText = `${num1} - ${num2}`;
 ans = num1 - num2;
 } else {
@@ -173,98 +174,86 @@ qText = `${num1} × ${num2}`;
 ans = num1 * num2;
 }
 } else {
-// SATs Style Arithmetic & Operations (Ages 9-11)
-const types = ['mult', 'div', 'square', 'mixed'];
+// High Complexity KS2 SATs Questions
+const types = ['fraction', 'percentage', 'algebra', 'bodmas', 'decimal'];
 const type = types[Math.floor(Math.random() * types.length)];
 
-if (type === 'mult') {
-let num1 = Math.floor(Math.random() * 80) + 12;
-let num2 = Math.floor(Math.random() * 8) + 3;
-qText = `${num1} × ${num2}`;
-ans = num1 * num2;
-} else if (type === 'div') {
-let num2 = Math.floor(Math.random() * 11) + 2;
-ans = Math.floor(Math.random() * 12) + 3;
-let num1 = ans * num2; // guaranteed whole number answer
-qText = `${num1} ÷ ${num2}`;
-} else if (type === 'square') {
-let num = Math.floor(Math.random() * 11) + 2;
-qText = `${num}²`;
-ans = num * num;
+if (type === 'fraction') {
+// Fractions of amounts: e.g., 3/5 of 45
+const denominators =;
+let den = denominators[Math.floor(Math.random() * denominators.length)];
+let factor = Math.floor(Math.random() * 10) + 2;
+let wholeAmount = den * factor;
+let num = Math.floor(Math.random() * (den - 1)) + 1;
+
+qText = `Find <span style="text-decoration:underline;">${num}</span><br>${den} of ${wholeAmount}`;
+ans = (wholeAmount / den) * num;
+}
+else if (type === 'percentage') {
+// SATs Percentages: 10%, 20%, 25%, 50%, 75%
+const percents =;
+let pct = percents[Math.floor(Math.random() * percents.length)];
+let base = (Math.floor(Math.random() * 15) + 1) * 40; // Makes numbers easy to divide
+
+qText = `${pct}% of ${base}`;
+ans = (base * pct) / 100;
+}
+else if (type === 'algebra') {
+// Missing number/Algebra balancing equations
+let variant = Math.random() > 0.5;
+let secret = Math.floor(Math.random() * 30) + 5;
+if (variant) {
+let known = Math.floor(Math.random() * 40) + 10;
+let target = secret + known;
+qText = `Find x:<br> x + ${known} = ${target}`;
 } else {
-let num1 = Math.floor(Math.random() * 40) + 10;
+let mult = Math.floor(Math.random() * 5) + 3;
+let target = secret * mult;
+qText = `Find y:<br> ${mult}y = ${target}`;
+}
+ans = secret;
+}
+else if (type === 'bodmas') {
+// Order of operations
+let num1 = Math.floor(Math.random() * 12) + 4;
 let num2 = Math.floor(Math.random() * 5) + 2;
-let num3 = Math.floor(Math.random() * 20) + 2;
-qText = `(${num1} × ${num2}) - ${num3}`;
-ans = (num1 * num2) - num3;
+let num3 = Math.floor(Math.random() * 15) + 3;
+
+qText = `${num3} + (${num1} × ${num2})`;
+ans = num3 + (num1 * num2);
+}
+else {
+// Decimal arithmetic
+isDecimal = true;
+let baseNum1 = Math.floor(Math.random() * 50) + 10;
+let baseNum2 = Math.floor(Math.random() * 40) + 5;
+let dec1 = (baseNum1 / 10).toFixed(1);
+let dec2 = (baseNum2 / 10).toFixed(1);
+
+qText = `${dec1} + ${dec2}`;
+ans = (parseFloat(dec1) + parseFloat(dec2)).toFixed(1);
 }
 }
 
-currentAnswer = ans;
-document.getElementById('question-text').innerText = qText;
-setupOptions(ans);
+currentAnswer = isDecimal ? ans.toString() : parseInt(ans).toString();
+document.getElementById('question-text').innerHTML = qText;
+setupOptions(ans, isDecimal);
 }
 
-function setupOptions(correctAnswer) {
+function setupOptions(correctAnswer, isDecimal) {
 const container = document.getElementById('options-container');
 container.innerHTML = '';
 
-// Generate distinct random incorrect options close to the correct answer
-let optionsSet = new Set([correctAnswer]);
+let optionsSet = new Set();
+let formattedCorrect = isDecimal ? parseFloat(correctAnswer).toFixed(1) : parseInt(correctAnswer).toString();
+optionsSet.add(formattedCorrect);
+
 while(optionsSet.size < 4) {
-let variance = Math.floor(Math.random() * 20) - 10;
-if (variance === 0) variance = 5;
-let fakeAns = correctAnswer + variance;
-if (fakeAns >= 0) optionsSet.add(fakeAns);
-}
-
-// Shuffle the array of options
-let optionsArray = Array.from(optionsSet).sort(() => Math.random() - 0.5);
-
-optionsArray.forEach(opt => {
-const btn = document.createElement('button');
-btn.className = 'option-btn';
-btn.innerText = opt;
-btn.onclick = () => checkAnswer(opt, btn);
-container.appendChild(btn);
-});
-}
-
-function checkAnswer(selected, selectedBtn) {
-if (hasAnswered) return;
-hasAnswered = true;
-totalQuestions++;
-document.getElementById('total-questions').innerText = totalQuestions;
-
-const buttons = document.querySelectorAll('.option-btn');
-
-if (selected === currentAnswer) {
-selectedBtn.classList.add('correct');
-document.getElementById('feedback-text').innerHTML = "🌟 Brilliant! That's correct.";
-score++;
-streak++;
-document.getElementById('score').innerText = score;
+if (isDecimal) {
+let variance = ((Math.floor(Math.random() * 9) - 4) / 10);
+if (variance === 0) variance = 0.5;
+let fakeAns = (parseFloat(correctAnswer) + variance).toFixed(1);
+if (parseFloat(fakeAns) >= 0) optionsSet.add(fakeAns);
 } else {
-selectedBtn.classList.add('wrong');
-document.getElementById('feedback-text').innerHTML = `❌ Not quite! The answer was ${currentAnswer}.`;
-streak = 0;
-
-// Highlight the correct one
-buttons.forEach(btn => {
-if (parseInt(btn.innerText) === currentAnswer) {
-btn.classList.add('correct');
-}
-});
-}
-
-document.getElementById('streak').innerText = streak;
-document.getElementById('next-button').classList.remove('hidden');
-}
-
-function nextQuestion() {
-generateQuestion();
-}
-</script>
-
-</body>
-</html>
+let variance = Math.floor(Math.random() * 14) - 7;
+if (variance === 0) variance = 3;
