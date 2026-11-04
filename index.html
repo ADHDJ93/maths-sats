@@ -2,19 +2,27 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#4a6fa5">
+<meta name="description" content="A fun KS2 maths practice game with questions, streaks, XP and ranks.">
 <title>KS2 SATs Maths Arena</title>
 <style>
 :root {
 --primary: #4a6fa5;
---success: #2ec4b6;
---danger: #e71d36;
+--success: #168f83;
+--danger: #c92a43;
 --background: #f4f7f6;
 --text: #2b2d42;
+--muted: #64748b;
+--border: #cbd5e1;
+--focus: #f59e0b;
 }
+
+* { box-sizing: border-box; }
+
 body {
-font-family: 'Segoe UI', Tahoma, sans-serif;
-background-color: var(--background);
+font-family: "Segoe UI", Tahoma, sans-serif;
+background: var(--background);
 color: var(--text);
 margin: 0;
 padding: 20px;
@@ -23,312 +31,702 @@ justify-content: center;
 align-items: center;
 min-height: 100vh;
 }
+
+button { font: inherit; }
+
+button:focus-visible {
+outline: 3px solid var(--focus);
+outline-offset: 3px;
+}
+
 .game-container {
 background: white;
 padding: 30px;
 border-radius: 20px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+box-shadow: 0 10px 30px rgba(0,0,0,.1);
 width: 100%;
-max-width: 500px;
+max-width: 560px;
 text-align: center;
 }
-h1 { color: var(--primary); margin-top: 0; font-size: 28px; }
+
+h1 {
+color: var(--primary);
+margin: 0 0 10px;
+font-size: clamp(24px, 5vw, 30px);
+}
+
+.intro {
+color: var(--muted);
+font-weight: 500;
+line-height: 1.5;
+}
+
 .setup-screen button, .back-btn {
 display: block;
 width: 100%;
 padding: 15px;
 margin: 10px 0;
 font-size: 18px;
-border: none;
+border: 0;
 border-radius: 10px;
 cursor: pointer;
 background: #e2e8f0;
-font-weight: bold;
+color: var(--text);
+font-weight: 700;
 }
-.setup-screen button:hover { background: var(--primary); color: white; }
+
+.setup-screen button:hover {
+background: var(--primary);
+color: white;
+}
+
 .stats-bar {
 display: grid;
-grid-template-columns: 1fr 1fr 1fr;
-gap: 10px;
+grid-template-columns: repeat(3, 1fr);
+gap: 8px;
 margin-bottom: 15px;
-font-weight: bold;
+font-weight: 700;
 font-size: 14px;
 background: #f8fafc;
-padding: 12px;
+padding: 12px 8px;
 border-radius: 12px;
 }
-.stat-card { display: flex; flex-direction: column; justify-content: center; }
-.stat-val { font-size: 18px; color: var(--primary); }
+
+.stat-card {
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 4px;
+}
+
+.stat-val {
+font-size: 18px;
+color: var(--primary);
+}
+
 .level-container {
 background: #e2e8f0;
 border-radius: 20px;
-margin: 15px 0 25px 0;
+margin: 15px 0 25px;
 position: relative;
-height: 24px;
+height: 26px;
 overflow: hidden;
 }
+
 .level-bar {
 background: linear-gradient(90deg, #2ec4b6, #00b4d8);
 width: 0%;
 height: 100%;
-transition: width 0.4s ease;
+transition: width .35s ease;
 }
+
 .level-text {
 position: absolute;
-width: 100%;
-text-align: center;
-top: 2px;
-left: 0;
+inset: 3px 0 auto;
 font-size: 13px;
-font-weight: bold;
+font-weight: 700;
 color: #1e293b;
+pointer-events: none;
 }
+
 .question-box {
-font-size: 36px;
-font-weight: bold;
+font-size: clamp(27px, 7vw, 38px);
+font-weight: 700;
 margin: 25px 0;
 color: var(--text);
+overflow-wrap: anywhere;
 }
+
 .options-grid {
 display: grid;
 grid-template-columns: 1fr 1fr;
-gap: 15px;
+gap: 12px;
 }
+
 .option-btn {
-padding: 18px;
-font-size: 22px;
-font-weight: bold;
-border: 2px solid #cbd5e1;
+min-height: 64px;
+padding: 14px;
+font-size: clamp(19px, 5vw, 23px);
+font-weight: 700;
+border: 2px solid var(--border);
 border-radius: 14px;
 background: white;
+color: var(--text);
 cursor: pointer;
+overflow-wrap: anywhere;
 }
-.option-btn:hover { border-color: var(--primary); background: #f0f4f8; }
-.correct { background-color: var(--success) !important; color: white; border-color: var(--success) !important; }
-.wrong { background-color: var(--danger) !important; color: white; border-color: var(--danger) !important; }
-.hidden { display: none; }
-.feedback { font-size: 22px; font-weight: bold; margin-top: 20px; min-height: 30px; color: var(--primary); }
+
+.option-btn:hover:not(:disabled) {
+border-color: var(--primary);
+background: #f0f4f8;
+}
+
+.option-btn:disabled {
+cursor: default;
+opacity: 1;
+}
+
+.correct {
+background: var(--success) !important;
+color: white !important;
+border-color: var(--success) !important;
+}
+
+.wrong {
+background: var(--danger) !important;
+color: white !important;
+border-color: var(--danger) !important;
+}
+
+.hidden { display: none !important; }
+
+.feedback {
+font-size: 19px;
+font-weight: 700;
+margin-top: 20px;
+min-height: 30px;
+color: var(--primary);
+line-height: 1.4;
+}
+
 .next-btn {
 margin-top: 20px;
-padding: 14px 40px;
+padding: 14px 32px;
 font-size: 18px;
-font-weight: bold;
-background: #4a6fa5;
+font-weight: 700;
+background: var(--primary);
 color: white;
-border: none;
+border: 0;
 border-radius: 10px;
 cursor: pointer;
 }
+
+.next-btn:hover { filter: brightness(.92); }
+
 .back-btn {
-padding: 8px 12px;
-font-size: 13px;
+padding: 9px 12px;
+font-size: 14px;
 width: auto;
-margin: 20px auto 0 auto;
+margin: 20px auto 0;
 background: transparent;
-color: #64748b;
-border: 1px solid #cbd5e1;
+color: var(--muted);
+border: 1px solid var(--border);
+}
+
+.small-note {
+color: var(--muted);
+font-size: 13px;
+margin-top: 18px;
+}
+
+@media (max-width: 420px) {
+body {
+padding: 12px;
+align-items: flex-start;
+}
+
+.game-container {
+padding: 22px 16px;
+margin: auto 0;
+}
+
+.stats-bar { font-size: 12px; }
+.stat-val { font-size: 16px; }
+.options-grid { gap: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+*, *::before, *::after {
+scroll-behavior: auto !important;
+transition-duration: .01ms !important;
+}
 }
 </style>
 </head>
+
 <body>
+<main class="game-container">
 
-<div class="game-container">
-<div id="setup-screen" class="setup-screen">
+<section id="setup-screen" class="setup-screen">
 <h1>KS2 SATs Maths Arena</h1>
-<p style="color: #64748b; font-weight: 500;">Earn XP, keep your streak alive, and level up your rank!</p>
-<button onclick="startGame('lower')">🚀 Lower Primary (Ages 6-8)</button>
-<button onclick="startGame('upper')">🏆 Upper Primary / SATs (Ages 9-11)</button>
-</div>
 
-<div id="game-screen" class="hidden">
+<p class="intro">
+Earn XP, keep your streak alive, and level up your rank!
+</p>
+
+<button type="button" data-tier="lower">
+🚀 Lower Primary (Ages 6–8)
+</button>
+
+<button type="button" data-tier="upper">
+🏆 Upper Primary / SATs (Ages 9–11)
+</button>
+
+<p class="small-note">
+Your XP and best streak are saved on this device.
+</p>
+</section>
+
+<section id="game-screen" class="hidden" aria-label="Maths game">
+
 <div class="stats-bar">
-<div class="stat-card"><span>Score</span><span id="score" class="stat-val">0/0</span></div>
-<div class="stat-card"><span>Streak</span><span id="streak" class="stat-val">🔥 0</span></div>
-<div class="stat-card"><span>Best Streak</span><span id="high-score" class="stat-val">👑 0</span></div>
+<div class="stat-card">
+<span>Score</span>
+<span id="score" class="stat-val">0/0</span>
 </div>
 
-<div class="level-container">
+<div class="stat-card">
+<span>Streak</span>
+<span id="streak" class="stat-val">🔥 0</span>
+</div>
+
+<div class="stat-card">
+<span>Best Streak</span>
+<span id="high-score" class="stat-val">👑 0</span>
+</div>
+</div>
+
+<div class="level-container"
+role="progressbar"
+aria-label="Progress to next rank"
+aria-valuemin="0"
+aria-valuemax="100"
+aria-valuenow="0"
+id="level-progress">
+
 <div id="level-bar" class="level-bar"></div>
-<div id="level-text" class="level-text">Rank: Loading...</div>
+<div id="level-text" class="level-text">
+Rank: Loading...
+</div>
 </div>
 
-<div id="question-text" class="question-box">Loading Sum...</div>
-<div id="options-container" class="options-grid"></div>
-<div id="feedback-text" class="feedback"></div>
+<div id="question-text"
+class="question-box"
+aria-live="polite">
+Loading question…
+</div>
 
-<button id="next-button" class="next-btn hidden" onclick="nextQuestion()">Next Challenge ➡️</button>
-<button class="back-btn" onclick="exitToMenu()">⚙️ Change Level</button>
+<div id="options-container"
+class="options-grid"
+aria-label="Answer options">
 </div>
+
+<div id="feedback-text"
+class="feedback"
+role="status"
+aria-live="polite">
 </div>
+
+<button id="next-button"
+type="button"
+class="next-btn hidden">
+Next Challenge ➡️
+</button>
+
+<button id="back-button"
+type="button"
+class="back-btn">
+⚙️ Change Level
+</button>
+
+</section>
+</main>
 
 <script>
-var score = 0;
-var totalQuestions = 0;
-var streak = 0;
-var maxStreak = 0;
-var xp = 0;
-var currentTier = 'lower';
-var currentAnswer = '';
-var hasAnswered = false;
+"use strict";
 
-function getRankName(xpValue) {
-if (xpValue < 30) return 'Maths Novice 🌱';
-if (xpValue < 80) return 'Sum Apprentice 🛡️';
-if (xpValue < 150) return 'Equation Knight ⚔️';
-if (xpValue < 250) return 'Number Wizard 🔮';
-return 'SATS Grandmaster 👑';
+const STORAGE_PREFIX = "ks2MathsArena";
+
+const state = {
+score: 0,
+totalQuestions: 0,
+streak: 0,
+maxStreak: 0,
+xp: 0,
+currentTier: "lower",
+currentAnswer: 0,
+hasAnswered: false
+};
+
+const elements = {
+setup: document.getElementById("setup-screen"),
+game: document.getElementById("game-screen"),
+score: document.getElementById("score"),
+streak: document.getElementById("streak"),
+highScore: document.getElementById("high-score"),
+levelBar: document.getElementById("level-bar"),
+levelText: document.getElementById("level-text"),
+levelProgress: document.getElementById("level-progress"),
+question: document.getElementById("question-text"),
+options: document.getElementById("options-container"),
+feedback: document.getElementById("feedback-text"),
+next: document.getElementById("next-button"),
+back: document.getElementById("back-button")
+};
+
+function safeLoad(key, fallback = 0) {
+try {
+const value = Number.parseInt(localStorage.getItem(key), 10);
+return Number.isFinite(value) && value >= 0
+? value
+: fallback;
+} catch (error) {
+return fallback;
+}
 }
 
-function exitToMenu() {
-document.getElementById('game-screen').className = 'hidden';
-document.getElementById('setup-screen').className = 'setup-screen';
+function safeSave(key, value) {
+try {
+localStorage.setItem(key, String(value));
+} catch (error) {
+// Game remains playable if storage is unavailable.
+}
 }
 
-function startGame(tier) {
-currentTier = tier;
-score = 0;
-totalQuestions = 0;
-streak = 0;
-xp = parseInt(localStorage.getItem('xp_' + currentTier)) || 0;
-maxStreak = parseInt(localStorage.getItem('streak_' + currentTier)) || 0;
-
-document.getElementById('score').innerText = '0/0';
-document.getElementById('streak').innerText = '🔥 0';
-document.getElementById('high-score').innerText = '👑 ' + maxStreak;
-
-updateLevelBar();
-document.getElementById('setup-screen').className = 'hidden';
-document.getElementById('game-screen').className = '';
-generateQuestion();
+function getRankName(xp) {
+if (xp < 30) return "Maths Novice 🌱";
+if (xp < 80) return "Sum Apprentice 🛡️";
+if (xp < 150) return "Equation Knight ⚔️";
+if (xp < 250) return "Number Wizard 🔮";
+return "SATs Grandmaster 👑";
 }
 
 function updateLevelBar() {
-var percentage = Math.min((xp / 300) * 100, 100);
-document.getElementById('level-bar').style.width = percentage + '%';
-document.getElementById('level-text').innerText = getRankName(xp) + ' (' + xp + ' XP)';
+const thresholds = [0, 30, 80, 150, 250];
+const nextThreshold = thresholds.find(value => value > state.xp);
+
+const previousThreshold = thresholds
+.filter(value => value <= state.xp)
+.pop();
+
+const progress = nextThreshold
+? ((state.xp - previousThreshold) /
+(nextThreshold - previousThreshold)) * 100
+: 100;
+
+elements.levelBar.style.width = `${progress}%`;
+elements.levelText.textContent =
+`${getRankName(state.xp)} (${state.xp} XP)`;
+
+elements.levelProgress.setAttribute(
+"aria-valuenow",
+String(Math.round(progress))
+);
+}
+
+function updateStats() {
+elements.score.textContent =
+`${state.score}/${state.totalQuestions}`;
+
+elements.streak.textContent = `🔥 ${state.streak}`;
+elements.highScore.textContent = `👑 ${state.maxStreak}`;
+
+updateLevelBar();
+}
+
+function startGame(tier) {
+if (tier !== "lower" && tier !== "upper") return;
+
+state.currentTier = tier;
+state.score = 0;
+state.totalQuestions = 0;
+state.streak = 0;
+
+state.xp = safeLoad(`${STORAGE_PREFIX}_xp_${tier}`);
+state.maxStreak = safeLoad(`${STORAGE_PREFIX}_streak_${tier}`);
+
+elements.setup.classList.add("hidden");
+elements.game.classList.remove("hidden");
+
+updateStats();
+generateQuestion();
+}
+
+function exitToMenu() {
+elements.game.classList.add("hidden");
+elements.setup.classList.remove("hidden");
+elements.feedback.textContent = "";
+}
+
+function randomInt(min, max) {
+return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function makeQuestion() {
+if (state.currentTier === "lower") {
+const type = randomInt(0, 3);
+
+if (type === 0) {
+const a = randomInt(10, 99);
+const b = randomInt(5, 49);
+return { text: `${a} + ${b}`, answer: a + b };
+}
+
+if (type === 1) {
+const a = randomInt(10, 99);
+const b = randomInt(0, a);
+return { text: `${a} − ${b}`, answer: a - b };
+}
+
+if (type === 2) {
+const a = randomInt(2, 12);
+const b = randomInt(2, 12);
+return { text: `${a} × ${b}`, answer: a * b };
+}
+
+const divisor = randomInt(2, 10);
+const quotient = randomInt(2, 12);
+
+return {
+text: `${divisor * quotient} ÷ ${divisor}`,
+answer: quotient
+};
+}
+
+const type = randomInt(0, 7);
+
+if (type === 0) {
+const denominator = [2, 3, 4, 5, 8, 10][randomInt(0, 5)];
+const numerator = randomInt(1, denominator - 1);
+const whole = denominator * randomInt(2, 20);
+
+return {
+text: `Find ${numerator}/${denominator} of ${whole}`,
+answer: numerator * (whole / denominator)
+};
+}
+
+if (type === 1) {
+const percent = [10, 20, 25, 50, 75][randomInt(0, 4)];
+const amount = randomInt(2, 20) * 20;
+
+return {
+text: `${percent}% of ${amount}`,
+answer: amount * percent / 100
+};
+}
+
+if (type === 2) {
+const x = randomInt(5, 30);
+const known = randomInt(10, 50);
+
+return {
+text: `Find x: x + ${known} = ${x + known}`,
+answer: x
+};
+}
+
+if (type === 3) {
+const a = randomInt(3, 12);
+const b = randomInt(2, 9);
+const c = randomInt(5, 30);
+
+return {
+text: `${c} + (${a} × ${b})`,
+answer: c + a * b
+};
+}
+
+if (type === 4) {
+const divisor = randomInt(2, 12);
+const quotient = randomInt(5, 20);
+
+return {
+text: `${divisor * quotient} ÷ ${divisor}`,
+answer: quotient
+};
+}
+
+if (type === 5) {
+const a = randomInt(2, 12);
+const b = randomInt(2, 12);
+
+return {
+text: `What is ${a}² + ${b}`,
+answer: a * a + b
+};
+}
+
+if (type === 6) {
+const length = randomInt(3, 15);
+const width = randomInt(2, 12);
+
+return {
+text: `Perimeter of a ${length} cm × ${width} cm rectangle`,
+answer: 2 * (length + width)
+};
+}
+
+const total = randomInt(3, 12) * 10;
+const part = randomInt(1, 9) * 10;
+
+return {
+text: `A £${total} item is reduced by £${part}. New price?`,
+answer: total - part
+};
+}
+
+function shuffle(array) {
+for (let i = array.length - 1; i > 0; i--) {
+const j = randomInt(0, i);
+[array[i], array[j]] = [array[j], array[i]];
+}
+
+return array;
+}
+
+function createOptions(correctAnswer) {
+const options = new Set([correctAnswer]);
+
+const offsets = [
+-10, -8, -6, -5, -4, -3, -2, -1,
+1, 2, 3, 4, 5, 6, 8, 10
+];
+
+let attempts = 0;
+
+while (options.size < 4 && attempts < 100) {
+const offset = offsets[randomInt(0, offsets.length - 1)];
+const candidate = correctAnswer + offset;
+
+if (candidate >= 0) {
+options.add(candidate);
+}
+
+attempts++;
+}
+
+let fallback = Math.max(0, correctAnswer + 1);
+
+while (options.size < 4) {
+if (fallback !== correctAnswer) {
+options.add(fallback);
+}
+
+fallback++;
+}
+
+return shuffle([...options]);
 }
 
 function generateQuestion() {
-hasAnswered = false;
-document.getElementById('feedback-text').innerText = '';
-document.getElementById('next-button').className = 'hidden';
+state.hasAnswered = false;
 
-var qText = '';
-var ans = 0;
+elements.feedback.textContent = "";
+elements.next.classList.add("hidden");
+elements.options.replaceChildren();
 
-if (currentTier === 'lower') {
-var choice = Math.floor(Math.random() * 3);
-if (choice === 0) {
-var num1 = Math.floor(Math.random() * 70) + 15;
-var num2 = Math.floor(Math.random() * 40) + 5;
-qText = num1 + ' + ' + num2;
-ans = num1 + num2;
-} else if (choice === 1) {
-var num1 = Math.floor(Math.random() * 90) + 10;
-var num2 = Math.floor(Math.random() * num1);
-qText = num1 + ' - ' + num2;
-ans = num1 - num2;
-} else {
-var num1 = Math.floor(Math.random() * 9) + 2;
-var num2 = Math.floor(Math.random() * 10) + 1;
-qText = num1 + ' x ' + num2;
-ans = num1 * num2;
-}
-} else {
-var choice = Math.floor(Math.random() * 4);
-if (choice === 0) {
-var factor = Math.floor(Math.random() * 8) + 2;
-var wholeAmount = 5 * factor;
-var num = Math.floor(Math.random() * 4) + 1;
-qText = 'Find ' + num + '/5 of ' + wholeAmount;
-ans = (wholeAmount / 5) * num;
-} else if (choice === 1) {
-var base = (Math.floor(Math.random() * 10) + 1) * 20;
-qText = '25% of ' + base;
-ans = base * 0.25;
-} else if (choice === 2) {
-var secret = Math.floor(Math.random() * 15) + 5;
-var known = Math.floor(Math.random() * 25) + 10;
-var target = secret + known;
-qText = 'Find x: x + ' + known + ' = ' + target;
-ans = secret;
-} else {
-var num1 = Math.floor(Math.random() * 7) + 3;
-var num2 = Math.floor(Math.random() * 4) + 2;
-var num3 = Math.floor(Math.random() * 15) + 5;
-qText = num3 + ' + (' + num1 + ' x ' + num2 + ')';
-ans = num3 + (num1 * num2);
+const question = makeQuestion();
+
+state.currentAnswer = question.answer;
+elements.question.textContent = question.text;
+
+for (const option of createOptions(question.answer)) {
+const button = document.createElement("button");
+
+button.type = "button";
+button.className = "option-btn";
+button.textContent = String(option);
+
+button.addEventListener("click", () => {
+checkAnswer(option, button);
+});
+
+elements.options.appendChild(button);
 }
 }
 
-currentAnswer = ans.toString();
-document.getElementById('question-text').innerHTML = qText;
-setupOptions(ans);
+function checkAnswer(selected, selectedButton) {
+if (state.hasAnswered) return;
+
+state.hasAnswered = true;
+state.totalQuestions++;
+
+const buttons = elements.options.querySelectorAll("button");
+
+buttons.forEach(button => {
+button.disabled = true;
+});
+
+if (selected === state.currentAnswer) {
+selectedButton.classList.add("correct");
+
+state.score++;
+state.streak++;
+
+const earnedXP = state.streak >= 3 ? 15 : 10;
+
+state.xp += earnedXP;
+
+elements.feedback.textContent =
+state.streak >= 3
+? `🔥 Streak bonus! +${earnedXP} XP`
+: `🌟 Brilliant! +${earnedXP} XP`;
+
+if (state.streak > state.maxStreak) {
+state.maxStreak = state.streak;
+
+safeSave(
+`${STORAGE_PREFIX}_streak_${state.currentTier}`,
+state.maxStreak
+);
 }
 
-function setupOptions(correctAnswer) {
-var container = document.getElementById('options-container');
-container.innerHTML = '';
+safeSave(
+`${STORAGE_PREFIX}_xp_${state.currentTier}`,
+state.xp
+);
 
-var optionsSet = new Set();
-optionsSet.add(correctAnswer.toString());
-while(optionsSet.size < 4) {
-var variance = Math.floor(Math.random() * 10) - 5;
-if (variance === 0) variance = 4;
-var fakeAns = correctAnswer + variance;
-if (fakeAns >= 0) optionsSet.add(fakeAns.toString());
-}
-var optionsArray = Array.from(optionsSet).sort(function() { return 0.5 - Math.random(); });
-for(var i = 0; i < optionsArray.length; i++) {
-(function() {
-var opt = optionsArray[i];
-var btn = document.createElement('button');
-btn.className = 'option-btn';
-btn.innerText = opt;
-btn.onclick = function() { checkAnswer(opt, btn); };
-container.appendChild(btn);
-})();
-}
-}
-function checkAnswer(selected, selectedBtn) {
-if (hasAnswered) return;
-hasAnswered = true;
-totalQuestions++;
-var buttons = document.querySelectorAll('.option-btn');
-var feedbackEl = document.getElementById('feedback-text');
-if (selected === currentAnswer) {
-selectedBtn.className = 'option-btn correct';
-score++;
-streak++;
-var baseXP = 10;
-if (streak >= 3) {
-baseXP = 15;
-feedbackEl.innerHTML = '🔥 STREAK BONUS! +15 XP';
 } else {
-feedbackEl.innerHTML = '🌟 Brilliant! +10 XP';
+selectedButton.classList.add("wrong");
+
+elements.feedback.textContent =
+`🧠 Good try! The correct answer was ${state.currentAnswer}.`;
+
+state.streak = 0;
+
+buttons.forEach(button => {
+if (Number(button.textContent) === state.currentAnswer) {
+button.classList.add("correct");
 }
-xp += baseXP;
-localStorage.setItem('xp_' + currentTier, xp);
-if (streak > maxStreak) {
-maxStreak = streak;
-localStorage.setItem('streak_' + currentTier, maxStreak);
-document.getElementById('high-score').innerText = '👑 ' + maxStreak;
+});
 }
-} else {
-selectedBtn.className = 'option-btn wrong';
-feedbackEl.innerHTML = '🧠 Great try! The answer was ' + currentAnswer;
-streak = 0;
-for(var i = 0; i < buttons.length; i++) {
-if (buttons[i].innerText === currentAnswer) {
-buttons[i].className = 'option-btn correct';
+
+updateStats();
+
+elements.next.classList.remove("hidden");
+elements.next.focus();
+}
+
+// Button event listeners
+elements.setup.addEventListener("click", event => {
+const button = event.target.closest("button[data-tier]");
+
+if (button) {
+startGame(button.dataset.tier);
+}
+});
+
+elements.next.addEventListener("click", generateQuestion);
+elements.back.addEventListener("click", exitToMenu);
+
+// Keyboard shortcuts: press 1, 2, 3 or 4 to answer.
+document.addEventListener("keydown", event => {
+if (
+elements.game.classList.contains("hidden") ||
+state.hasAnswered
+) return;
+
+const key = Number(event.key);
+
+if (key >= 1 && key <= 4) {
+const button = elements.options.children[key - 1];
+
+if (button) {
+button.click();
 }
 }
-}
-document.getElementById('score').innerText = score + '/' + totalQuestions;
-document.getElementById('streak').innerText = '🔥 ' + streak;
-updateLevelBar();
-document.getElementById('next-button').className = 'next-btn';
-}
-function nextQuestion() {
-generateQuestion();
-}
+});
+</script>
+</body>
+</html>
